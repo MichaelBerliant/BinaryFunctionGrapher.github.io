@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Binary Function Grapher</title>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Libre Caslon Text';
+        src: url('./LibreCaslonText-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+      body {
+        background-color: white;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+      .text-area-container {
+        opacity: 0.7;
+        display: flex;
+        background-image: radial-gradient(#e252ff, #fae0ff, #e252ff, #fae0ff);
+        background-size: 450% 450%;
+        background-position: 0% 0%;
+        animation: gradientShift 5s infinite linear;
+      }
+      .tx {
+        padding: 0.3vmax 0.6vmax;
+        background-color: transparent;
+        height: 2vmax;
+        border: none;
+        outline: none;
+        border-radius: 0px;
+        resize: none;
+        font-family: "Libre Caslon Text", serif;
+        letter-spacing: 2px;
+        font-size: 0.9vmax;
+      }
+      .in {
+        cursor: pointer;
+        margin: 0vmax 0vmax 0vmax 1.5vmax;
+        font-family: "Libre Caslon Text", serif;
+        font-size: 0.9vmax;
+        color: black;
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: all 0.5s ease-out;
+      }
+      .in:hover {
+        transform: scale(1.3, 1);
+        color: red;
+      }
+      textarea::placeholder {
+        letter-spacing: 0.5px;
+        color: #aa00cc;
+      }
+      .d {
+        position: absolute;
+        top: 2%;
+        left: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: translate(-50%, 0%);
+      }
+      /*Toggle*/
+      @keyframes disintegrate {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          filter: blur(10px);
+        }
+      }
+      @keyframes integrate {
+        0% {
+          opacity: 0;
+          filter: blur(10px);
+        }
+        100% {
+          opacity: 1;
+          filter: none;
+        }
+      }
+      .d.disintegrate {
+        animation: disintegrate 0.75s forwards;
+      }
+      .d.integrate {
+        animation: integrate 0.75s forwards;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .toggle-button {
+        background-color: rgba(0, 0, 0, 0);
+        position: absolute;
+        top: 0.5%;
+        left: 0.5%;
+        z-index: 1000;
+        font-size: 1.5vmax;
+        font-family: "Libre Caslon Text", serif;
+        border: none;
+        color: black;
+        transition: all 0.5s ease-out;
+      }
+      .toggle-button:hover {
+        color: red;
+      }
+      /* Window */
+      .container {
+        display: none;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        background-image: radial-gradient(red, white);
+        padding: 20px;
+        width: 30vmax;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .section {
+        margin: 10px 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .section p {
+        color: black;
+        font-family: "Libre Caslon Text", serif;
+        margin: 8px 0;
+      }
+      .button-container {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .try-out-button {
+        font-size: 0.8vmax;
+        font-family: "Libre Caslon Text", serif;
+        border: 1px solid #d10000;
+        background: none;
+        color: black;
+        padding: 0.6vmax 1.2vmax;
+        margin-left: 10px;
+        border-radius: 10vmax;
+        cursor: pointer;
+        transition: all 0.3s ease-out;
+      }
+      .close-button {
+        transform: translate(-50%, 0%);
+        color: black;
+        font-size: 1.5vmax;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+      .try-out-button:hover {
+        border-radius: 0px;
+      }
+      .close-button:hover {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Toggle Button -->
+    <button id="toggleButton" class="toggle-button">&#8743;</button>
+
+    <!-- The textareas and utilities at the top of the page -->
+    <div class="d">
+      <div class="text-area-container">
+        <textarea
+          class="tx"
+          style="width: 32vmax;"
+          type="text"
+          id="function-input"
+          placeholder="Equation Output"
+        ></textarea>
+        <textarea
+          class="tx"
+          style="width: 4vmax;"
+          type="text"
+          id="scope"
+          placeholder="Scope"
+        ></textarea>
+      </div>
+      <a class="in" id="info">Info</a>
+      <a href="./list.txt" class="in" target="_blank">Operators</a>
+      <a class="in" id="examples">Examples</a>
+    </div>
+
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/build/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="2in1out.js"></script>
+
+    <div id="error-display" style="position: absolute; bottom: 1%; left: 1%; color: red; font-family: 'Libre Caslon Text', serif; font-size: 0.8vmax;"></div>
+
+    <!-- Examples Window -->
+    <div class="container" style="top: 50%; left: 50%;" id="examplesWindow">
+      <div class="section">
+        <div class="button-container">
+          <p style="font-size: 1.05vmax;">Hemisphere Approximation</p>
+          <button class="try-out-button" id="hemisphere-tryout">
+            TRY OUT
+          </button>
+        </div>
+        <p style="font-size: 0.925vmax;">
+          S[50;0;x*x+y*y&lt;2500-j*j] | scope: 100
+        </p>
+      </div>
+      <div class="section">
+        <div class="button-container">
+          <p style="font-size: 1.05vmax;">Colorful Field</p>
+          <button class="try-out-button" id="colorful-tryout">
+            TRY OUT
+          </button>
+        </div>
+        <p style="font-size: 0.925vmax;">
+          sin(x*x)+sin(y*y)+sin(x)*sin(y) | scope: 70
+        </p>
+      </div>
+      <div class="section">
+        <div class="button-container">
+          <p style="font-size: 1.05vmax;">Sierpinski Pyramid</p>
+          <button class="try-out-button" id="sierpinski-tryout">
+            TRY OUT
+          </button>
+        </div>
+        <p style="font-size: 0.925vmax;">
+          ((x+32)^(y+32))-32 | scope: 63
+        </p>
+      </div>
+      <div class="section">
+        <div class="button-container">
+          <p style="font-size: 1.05vmax;">Spherical Ornament</p>
+          <button class="try-out-button" id="ornament-tryout">
+            TRY OUT
+          </button>
+        </div>
+        <p style="font-size: 0.925vmax;">
+          ((sign(round(sin(x)+y)-sin(x)-y)^~sign(round(sin(y)+x)-sin(y)-x)))*
+          (sqrt(15*15-x*x-y*y)) | scope: 30
+        </p>
+      </div>
+      <div class="section">
+        <div class="button-container">
+          <p style="font-size: 1.05vmax;">Floating Umbrella</p>
+          <button class="try-out-button" id="pentagon-tryout">
+            TRY OUT
+          </button>
+        </div>
+        <p style="font-size: 0.925vmax;">
+          max(max(S[100;1;(abs(x*sin(1/6*PI)+y*cos(1/6*PI))&lt;j*0.1)*(abs(-x*sin(1/6*PI)+y*cos(1/6*PI))&lt;j*0.1)*(abs(x)&lt;j*0.1)*0.001*j],0.25*sin(sqrt(x*x+y*y)**2))-0.00001/(x**8+y**8)+15,0)
+          | scope: 25
+        </p>
+      </div>
+      <div class="button-container">
+        <span class="close-button" id="closeExamples">&times;</span>
+      </div>
+    </div>
+
+    <!-- Info Window -->
+    <div class="container" id="infoWindow" style="top: 30%; left: 50%;">
+      <div class="section">
+        <p style="font-size: 1vmax;">
+          This is a 2 input 1 output function grapher. This program creates a
+          finite plane, and then changes the z-coordinate of each of its points
+          to follow your output expression, which is dependent on the variables
+          x and y. The plane will always be made from 350x350 points, but you
+          can choose how spread out those points are by choosing how large the
+          plane will be. The larger the plane is, the more points that are
+          further away from the origin will be evaluated, but at the cost of
+          point density.
+        </p>
+      </div>
+
+      <div class="button-container">
+        <span class="close-button" id="closeInfo">&times;</span>
+      </div>
+    </div>
+
+    <script>
+      // Spawning and deleting the examples window
+      document.getElementById("examples").addEventListener("click", function () {
+        document.getElementById("examplesWindow").style.display = "flex";
+      });
+
+      document
+        .getElementById("closeExamples")
+        .addEventListener("click", function () {
+          document.getElementById("examplesWindow").style.display = "none";
+        });
+
+      // Spawning and deleting the info window
+      document.getElementById("info").addEventListener("click", function () {
+        document.getElementById("infoWindow").style.display = "flex";
+      });
+
+      document.getElementById("closeInfo").addEventListener("click", function () {
+        document.getElementById("infoWindow").style.display = "none";
+      });
+
+      // Getting each of the try out buttons to change the textareas
+      const tryoutConfigs = [
+        {
+          id: "hemisphere-tryout",
+          functionValue: "S[50;0;x*x+y*y<2500-j*j]",
+          scopeValue: "100",
+        },
+        {
+          id: "colorful-tryout",
+          functionValue: "sin(x*x)+sin(y*y)+sin(x)*sin(y)",
+          scopeValue: "70",
+        },
+        {
+          id: "sierpinski-tryout",
+          functionValue: "((x+32)^(y+32))-32",
+          scopeValue: "63",
+        },
+        {
+          id: "ornament-tryout",
+          functionValue:
+            "((sign(round(sin(x)+y)-sin(x)-y)^~sign(round(sin(y)+x)-sin(y)-x)))*(sqrt(15*15-x*x-y*y))",
+          scopeValue: "30",
+        },
+        {
+          id: "pentagon-tryout",
+          functionValue:
+            "max(max(S[100;1;(abs(x*sin(1/6*PI)+y*cos(1/6*PI))<j*0.1)*(abs(-x*sin(1/6*PI)+y*cos(1/6*PI))<j*0.1)*(abs(x)<j*0.1)*0.001*j],0.25*sin(sqrt(x*x+y*y)**2))-0.00001/(x**8+y**8)+15,0)",
+          scopeValue: "25",
+        },
+      ];
+
+      tryoutConfigs.forEach((config) => {
+        document
+          .getElementById(config.id)
+          .addEventListener("click", function () {
+            const functionInput = document.getElementById("function-input");
+            const scopeInput = document.getElementById("scope");
+
+            functionInput.value = config.functionValue;
+            scopeInput.value = config.scopeValue;
+
+            const event = new KeyboardEvent("keydown", {
+              bubbles: true,
+              cancelable: true,
+              key: "Enter",
+              charCode: 13,
+              keyCode: 13,
+              view: window,
+            });
+
+            functionInput.dispatchEvent(event);
+            scopeInput.dispatchEvent(event);
+          });
+      });
+
+      // Toggle visibility of the .d div with disintegration animation
+      document
+        .getElementById("toggleButton")
+        .addEventListener("click", function () {
+          var dDiv = document.querySelector(".d");
+          var toggleBtn = this;
+
+          if (
+            !dDiv.classList.contains("hidden") &&
+            !dDiv.classList.contains("disintegrate")
+          ) {
+            // Start disintegration animation
+            dDiv.classList.add("disintegrate");
+
+            // Change the button character
+            toggleBtn.innerHTML = "&#8744;";
+
+            // When animation ends, hide the div
+            dDiv.addEventListener("animationend", function handleDisintegrate() {
+              dDiv.classList.add("hidden");
+              dDiv.classList.remove("disintegrate");
+              dDiv.removeEventListener("animationend", handleDisintegrate);
+            });
+          } else if (dDiv.classList.contains("hidden")) {
+            // Remove hidden class
+            dDiv.classList.remove("hidden");
+
+            // Start integration animation
+            dDiv.classList.add("integrate");
+
+            // Change the button character
+            toggleBtn.innerHTML = "&#8743;";
+
+            // When animation ends, remove integrate class
+            dDiv.addEventListener("animationend", function handleIntegrate() {
+              dDiv.classList.remove("integrate");
+              dDiv.removeEventListener("animationend", handleIntegrate);
+            });
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -113,22 +113,30 @@ function validateInput() {
 
     // Helper function to validate `S` function syntax
     function isValidSFunction(expression) {
-            const regex = /S\s*\[\s*\d+\s*;\s*\d+\s*;\s*[^;\]]+?\s*\]/g;
-            const matches = expression.match(regex);
+        // Regex to match a valid `S` function
+        const regex = /S\s*\[\s*\d+\s*;\s*\d+\s*;\s*[^;\]]+?\s*\]/g;
 
-            // If no matches and `S` exists, it's malformed
-            if (!matches && expression.includes('S')) {
-                return false;
-            }
+        // Find all matches of `S` functions
+        const matches = expression.match(regex);
 
-            // Check if each match is valid
-            for (const match of matches || []) {
-                if (!regex.test(match)) {
-                    return false; // Invalid `S` function
+        // If there are no `S` functions but 'S' exists, it's malformed
+        if (expression.includes('S') && !matches) {
+            return false;
+        }
+
+        // If there are `S` functions, ensure they are all valid
+        if (matches) {
+            // Check each match to ensure it's well-formed
+            for (const match of matches) {
+                if (!/^S\s*\[\s*\d+\s*;\s*\d+\s*;\s*[^;\]]+?\s*\]$/.test(match)) {
+                    return false; // Invalid `S` function format
                 }
             }
-            return true;
         }
+
+        // If there are no malformed or invalid matches, return true
+        return true;
+    }
 
     try {
         // Validate balanced parentheses and brackets

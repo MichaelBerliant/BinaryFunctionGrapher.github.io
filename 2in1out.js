@@ -74,12 +74,11 @@ functionInput.addEventListener('keydown', function(event) {
     }
 });
 
-//Error handling of the function
 function validateInput() {
     const errorDisplay = document.getElementById('error-display');
-    const functionStr = functionInput.value;
+    const functionStr = functionInput.value; // Use raw input for validation
 
-    //Helper function to check balanced parentheses and brackets
+    // Helper function to check balanced parentheses and brackets
     function isBalanced(expression) {
         const stack = [];
         for (const char of expression) {
@@ -95,17 +94,18 @@ function validateInput() {
         return stack.length === 0;
     }
 
-    //Helper function to check for invalid consecutive operators
+    // Helper function to check for invalid consecutive operators
     function hasInvalidOperators(expression) {
         const validOperators = ['**', '==', '!=', '>=', '<=', '<<', '>>', '>>>'];
-        const regex = /[\+\-\*\/<>=!]{2,}/g;
+        const regex = /[\+\-\*\/<>=!]{2,}/g; // Match two or more consecutive operators
         const matches = expression.match(regex);
 
         if (matches) {
-
+            // Validate each operator sequence
             for (const match of matches) {
                 if (!validOperators.includes(match)) {
-                    return true;
+                    return true; // Invalid operator found
+                }
             }
         }
         return false;
@@ -113,32 +113,43 @@ function validateInput() {
 
     // Helper function to validate `S` function syntax
     function isValidSFunction(expression) {
+        // Regex to match a valid `S` function
         const regex = /S\s*\[\s*\d+\s*;\s*\d+\s*;\s*[^;\]]+?\s*\]/g;
+
+        // Find all matches of `S` functions
         const matches = expression.match(regex);
 
+        // If there are no `S` functions but 'S' exists, it's malformed
         if (expression.includes('S') && !matches) {
             return false;
         }
 
+        // If there are `S` functions, ensure they are all valid
         if (matches) {
+            // Check each match to ensure it's well-formed
             for (const match of matches) {
                 if (!/^S\s*\[\s*\d+\s*;\s*\d+\s*;\s*[^;\]]+?\s*\]$/.test(match)) {
-                    return false;
+                    return false; // Invalid `S` function format
                 }
             }
         }
+
+        // If there are no malformed or invalid matches, return true
         return true;
     }
 
     try {
+        // Validate balanced parentheses and brackets
         if (!isBalanced(functionStr)) {
             throw new Error("Unmatched or misnested parentheses in the function.");
         }
 
+        // Validate consecutive operators
         if (hasInvalidOperators(functionStr)) {
             throw new Error("Invalid consecutive operators found.");
         }
 
+        // Validate `S` function syntax
         if (functionStr.includes('S') && !isValidSFunction(functionStr)) {
             throw new Error("Invalid syntax for S function. Ensure proper square brackets and semicolons.");
         }
@@ -153,43 +164,48 @@ function validateInput() {
             throw new Error("Scope must be a positive decimal number in base-10 format.");
         }
 
+        // Replace math functions and validate the transformed function
         const transformedFunctionStr = replaceMathFunctions(functionStr);
         const testFunction = new Function('x', 'y', `return ${transformedFunctionStr};`);
 
         // Test execution to catch runtime math errors
         const sandbox = (fn) => {
-            let hasValidOutput = false;
+            let hasValidOutput = false; // Flag to track if a valid output is found
 
+            // Iterate over geometry positions
             for (let i = 0; i < geometry.attributes.position.count; i++) {
                 const x = geometry.attributes.position.getX(i);
                 const y = geometry.attributes.position.getY(i);
 
                 try {
-                    const z = fn(x, y);
+                    const z = fn(x, y); // Evaluate the function at (x, y)
 
+                    // Check if z is valid
                     if (isFinite(z)) {
                         hasValidOutput = true;
-                        return;
+                        return; // Stop checking further points
                     }
                 } catch (error) {
                     console.error(`Error at x=${x}, y=${y}: ${error.message}`);
                 }
             }
 
+            // If no valid output is found, throw an error
             if (!hasValidOutput) {
                 throw new Error("No valid output found for the function.");
             }
         };
         sandbox(testFunction);
 
+        // Clear errors if all checks pass
         errorDisplay.textContent = '';
-        isFunctionValid = true;
-        return true;
+        isFunctionValid = true; // Mark function as valid
+        return true; // Input is valid
     } catch (error) {
         // Display the error message
         errorDisplay.textContent = `Error: ${error.message}`;
-        isFunctionValid = false;
-        return false;
+        isFunctionValid = false; // Mark function as invalid
+        return false; // Input is invalid
     }
 }
 
